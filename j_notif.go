@@ -6,6 +6,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	"github.com/shirou/gopsutil/disk"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"net/http"
 	"os"
@@ -203,6 +204,17 @@ group by pay_engine`
 	return retList
 }
 
+func init() {
+	customFormatter := new(log.TextFormatter)
+	customFormatter.TimestampFormat = "2006-01-02 15:04:05"
+	customFormatter.DisableColors = true
+	customFormatter.FullTimestamp = true
+	log.SetFormatter(customFormatter)
+	log.SetOutput(os.Stdout)
+	log.SetLevel(log.InfoLevel)
+	//log.SetReportCaller(true)
+}
+
 func main() {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
@@ -211,29 +223,29 @@ func main() {
 	viper.AddConfigPath(".")
 	err := viper.ReadInConfig()
 	if err != nil {
-		fmt.Println("Config not found...")
+		log.Errorln("Config not found...")
 		os.Exit(1)
 	}
 
 	tgToken := viper.GetString("tgToken")
 	if tgToken == "" {
-		fmt.Println("tgToken is required")
+		log.Errorln("tgToken is required")
 		os.Exit(1)
 	}
 	chatId := viper.GetString("chatId")
 	if chatId == "" {
-		fmt.Println("chatId is required")
+		log.Errorln("chatId is required")
 		os.Exit(1)
 	}
 
 	disksToCheck := viper.GetStringSlice("disksToCheck")
 	if len(disksToCheck) == 0 {
-		fmt.Println("disksToCheck is empty")
+		log.Infoln("disksToCheck is empty")
 	} else {
 		prevDiskNotif := viper.GetStringSlice("diskNotif")
 		diskNotif := diskUsage(disksToCheck, viper.GetFloat64("diskThreshold"))
 		if testEq(prevDiskNotif, diskNotif) {
-			fmt.Println("same disk notification. do not send")
+			log.Infoln("same disk notification. do not send")
 		} else {
 			if len(diskNotif) > 0 {
 				var text string
@@ -252,7 +264,7 @@ func main() {
 			viper.GetString("mysqldb"), viper.GetInt("mysqlsbmthreshold"))
 		prevSBMNotif := viper.GetStringSlice("prevSBMNotif")
 		if testEq(prevSBMNotif, sbmNotif) {
-			fmt.Println("same SBM notification. do not send")
+			log.Infoln("same SBM notification. do not send")
 		} else {
 			text := "checkSecondsBehindMaster\n"
 			for _, item := range sbmNotif {
@@ -269,7 +281,7 @@ func main() {
 			viper.GetString("mysqldb"), viper.GetInt("pay_engine_threshold"))
 		prevPENotif := viper.GetStringSlice("prevPENotif")
 		if testEq(prevPENotif, peNotif) {
-			fmt.Println("same pay_engine notification. do not send")
+			log.Infoln("same pay_engine notification. do not send")
 		} else {
 			text := "check_pay_engine\n"
 			for _, item := range peNotif {
