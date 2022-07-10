@@ -1,2 +1,4 @@
+tgToken: <token>
+chatId: <chatId>
 disksToCheck:
   - "/"
