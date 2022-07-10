@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        goos: [ linux ]
+        goos: [ linux, darwin ]
         goarch: [ "386", amd64, arm64 ]
         exclude:
           - goarch: "386"
@@ -37,4 +37,4 @@ jobs:
           overwrite: true
           ldflags: -X "main.appVersion=${{ env.APP_VERSION }}" -X "main.buildTime=${{ env.BUILD_TIME }}" -X main.gitCommit=${{ github.sha }} -X main.gitRef=${{ github.ref }} -extldflags -static -X github.com/chrislusf/seaweedfs/weed/util.COMMIT=${{github.sha}}
           extra_files: README.md config.example.yaml
-          asset_name: "j_notif-${{ env.BUILD_TIME }}-${{ matrix.goos }}-${{ matrix.goarch }}"
+          asset_name: "j_notif-latest-${{ matrix.goos }}-${{ matrix.goarch }}"
