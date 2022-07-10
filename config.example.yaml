@@ -2,3 +2,11 @@ tgToken: <token>
 chatId: <chatId>
 disksToCheck:
   - "/"
+diskthreshold: 70
+checksecondsbehindmaster: true
+mysqldb: electropay_db1
+mysqlhost: localhost
+mysqluser: root
+mysqlpass: hide
+mysqlport: 3312
+mysqlsbmthreshold: 20
