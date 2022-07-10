@@ -27,5 +27,5 @@ jobs:
           goarch: ${{ matrix.goarch }}
           project_path: "./"
           binary_name: "j_notif"
-          ldflags: "-s -w"
+#          ldflags: "-s -w"
           extra_files: README.md config.example.yaml
