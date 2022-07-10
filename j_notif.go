@@ -83,6 +83,12 @@ func testEq(a, b []string) bool {
 	return true
 }
 
+type TransIn3 struct {
+	PayEngineId   int    `db:"pay_engine"`
+	PayEngineName string `db:"name"`
+	TrnCount      int    `db:"cnt"`
+}
+
 type SBMRow struct {
 	Slave_IO_State                string `db:"Slave_IO_State"`
 	Master_Host                   string `db:"Master_Host"`
@@ -166,6 +172,37 @@ func checkSBM(host, port, user, pass, dbname string, threshold int) []string {
 	return retList
 }
 
+func checkPayEngine(host, port, user, pass, dbname string, threshold int) []string {
+	var retList []string
+	db, err := sqlx.Connect("mysql", user+":"+pass+"@tcp("+host+":"+port+")/"+dbname)
+	defer db.Close()
+	if err != nil {
+		panic(err)
+	}
+	sql := `
+select p.pay_engine,
+       pe.name,
+       count(p.id) as cnt
+from pays_main as p
+left join pays_engines as pe on p.pay_engine=pe.id
+where gstatus = 3
+group by pay_engine`
+
+	var peCount []TransIn3
+	err = db.Select(&peCount, sql)
+	if err != nil {
+		panic(err)
+	}
+	for _, row := range peCount {
+		if row.TrnCount > threshold {
+			retList = append(retList, "PayEngine: "+strconv.Itoa(row.PayEngineId)+"\n"+
+				"Name: "+row.PayEngineName+"\n"+
+				"Count: "+strconv.Itoa(row.TrnCount)+"\n")
+		}
+	}
+	return retList
+}
+
 func main() {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
@@ -217,13 +254,30 @@ func main() {
 		if testEq(prevSBMNotif, sbmNotif) {
 			fmt.Println("same SBM notification. do not send")
 		} else {
-			var text string
+			text := "checkSecondsBehindMaster\n"
 			for _, item := range sbmNotif {
 				text = text + item + "\n"
 			}
 			sendMsg(tgToken, chatId, text)
 		}
 		viper.Set("prevSBMNotif", sbmNotif)
+	}
+
+	if viper.GetBool("check_pay_engine") {
+		peNotif := checkPayEngine(viper.GetString("mysqlhost"), viper.GetString("mysqlport"),
+			viper.GetString("mysqluser"), viper.GetString("mysqlpass"),
+			viper.GetString("mysqldb"), viper.GetInt("pay_engine_threshold"))
+		prevPENotif := viper.GetStringSlice("prevPENotif")
+		if testEq(prevPENotif, peNotif) {
+			fmt.Println("same pay_engine notification. do not send")
+		} else {
+			text := "check_pay_engine\n"
+			for _, item := range peNotif {
+				text = text + item + "\n"
+			}
+			sendMsg(tgToken, chatId, text)
+		}
+		viper.Set("prevPENotif", peNotif)
 	}
 
 	viper.WriteConfig()
