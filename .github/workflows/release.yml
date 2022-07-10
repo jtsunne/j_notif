@@ -20,6 +20,14 @@ jobs:
             goos: windows
     steps:
       - uses: actions/checkout@v2
+
+      - name: Set APP_VERSION env
+        run: echo APP_VERSION=$(echo ${GITHUB_REF} | rev | cut -d'/' -f 1 | rev ) >> ${GITHUB_ENV}
+      - name: Set BUILD_TIME env
+        run: echo BUILD_TIME=$(date) >> ${GITHUB_ENV}
+      - name: Environment Printer
+        uses: managedkaos/print-env@v1.0
+
       - uses: wangyoucao577/go-release-action@v1.29
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -27,6 +35,6 @@ jobs:
           goarch: ${{ matrix.goarch }}
           release_tag: latest
           overwrite: true
-          ldflags: -extldflags -static -X github.com/chrislusf/seaweedfs/weed/util.COMMIT=${{github.sha}}
+          ldflags: -X "main.appVersion=${{ env.APP_VERSION }}" -X "main.buildTime=${{ env.BUILD_TIME }}" -X main.gitCommit=${{ github.sha }} -X main.gitRef=${{ github.ref }} -extldflags -static -X github.com/chrislusf/seaweedfs/weed/util.COMMIT=${{github.sha}}
           extra_files: README.md config.example.yaml
           asset_name: "j_notif-${{ env.BUILD_TIME }}-${{ matrix.goos }}-${{ matrix.goarch }}"
