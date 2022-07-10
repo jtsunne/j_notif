@@ -25,7 +25,8 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           goos: ${{ matrix.goos }}
           goarch: ${{ matrix.goarch }}
-          project_path: "./"
-          binary_name: "j_notif"
-#          ldflags: "-s -w"
+          release_tag: dev
+          overwrite: true
+          ldflags: -extldflags -static -X github.com/chrislusf/seaweedfs/weed/util.COMMIT=${{github.sha}}
           extra_files: README.md config.example.yaml
+          asset_name: "j_notif-${{ env.BUILD_TIME }}-${{ matrix.goos }}-${{ matrix.goarch }}"
