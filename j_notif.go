@@ -28,13 +28,13 @@ func sendMsg(tgToken, chatId, text string) {
 		"chat_id": "` + chatId + `",
 		"text": "` + textToSend + `"
 	}`)
-	request, error := http.NewRequest("POST", httpposturl, bytes.NewBuffer(jsonData))
+	request, err := http.NewRequest("POST", httpposturl, bytes.NewBuffer(jsonData))
 	request.Header.Set("Content-Type", "application/json; charset=UTF-8")
 
 	client := &http.Client{}
-	response, error := client.Do(request)
-	if error != nil {
-		panic(error)
+	response, err := client.Do(request)
+	if err != nil {
+		panic(err)
 	}
 	defer response.Body.Close()
 }
@@ -248,11 +248,13 @@ func main() {
 			log.Infoln("same disk notification. do not send")
 		} else {
 			if len(diskNotif) > 0 {
-				var text string
+				text := "check_pay_engine\n"
 				for _, item := range diskNotif {
 					text = text + item + "\n"
 				}
 				sendMsg(tgToken, chatId, text)
+			} else {
+				sendMsg(tgToken, chatId, "check_pay_engine: OK")
 			}
 		}
 		viper.Set("diskNotif", diskNotif)
@@ -267,8 +269,12 @@ func main() {
 			log.Infoln("same SBM notification. do not send")
 		} else {
 			text := "checkSecondsBehindMaster\n"
-			for _, item := range sbmNotif {
-				text = text + item + "\n"
+			if len(sbmNotif) > 0 {
+				for _, item := range sbmNotif {
+					text = text + item + "\n"
+				}
+			} else {
+				text = text + "OK\n"
 			}
 			sendMsg(tgToken, chatId, text)
 		}
@@ -284,8 +290,12 @@ func main() {
 			log.Infoln("same pay_engine notification. do not send")
 		} else {
 			text := "check_pay_engine\n"
-			for _, item := range peNotif {
-				text = text + item + "\n"
+			if len(peNotif) > 0 {
+				for _, item := range peNotif {
+					text = text + item + "\n"
+				}
+			} else {
+				text = text + " OK\n"
 			}
 			sendMsg(tgToken, chatId, text)
 		}
