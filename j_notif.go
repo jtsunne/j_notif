@@ -3,14 +3,15 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"net/http"
+	"os"
+	"strconv"
+
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	"github.com/shirou/gopsutil/disk"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"net/http"
-	"os"
-	"strconv"
 )
 
 func sendMsg(tgToken, chatId, text string) {
@@ -224,6 +225,7 @@ func main() {
 	err := viper.ReadInConfig()
 	if err != nil {
 		log.Errorln("Config not found...")
+		log.Errorln(err)
 		os.Exit(1)
 	}
 
