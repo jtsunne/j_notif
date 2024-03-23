@@ -221,16 +221,17 @@ func checkSBM(host, port, user, pass, dbname string, threshold int) []string {
 	if version[0:3] == "5.7" {
 		var sbmRow SBMRow57
 		db.QueryRowx("show slave status").StructScan(&sbmRow)
+		if sbmRow.Slave_SQL_Running == "No" || sbmRow.Slave_IO_Running == "No" {
+			retList = append(retList, "Slave_IO_Running: "+sbmRow.Slave_IO_Running+"\n"+
+				"Slave_SQL_Running: "+sbmRow.Slave_SQL_Running+"\n"+
+				"Seconds_Behind_Master: "+sbmRow.Seconds_Behind_Master+"\n")
+			return retList
+		}
 		intSBM, err := strconv.Atoi(sbmRow.Seconds_Behind_Master)
 		if err != nil {
 			panic(err)
 		}
 		if intSBM > threshold {
-			retList = append(retList, "Slave_IO_Running: "+sbmRow.Slave_IO_Running+"\n"+
-				"Slave_SQL_Running: "+sbmRow.Slave_SQL_Running+"\n"+
-				"Seconds_Behind_Master: "+sbmRow.Seconds_Behind_Master+"\n")
-		}
-		if sbmRow.Slave_SQL_Running == "No" || sbmRow.Slave_IO_Running == "No" {
 			retList = append(retList, "Slave_IO_Running: "+sbmRow.Slave_IO_Running+"\n"+
 				"Slave_SQL_Running: "+sbmRow.Slave_SQL_Running+"\n"+
 				"Seconds_Behind_Master: "+sbmRow.Seconds_Behind_Master+"\n")
@@ -240,16 +241,17 @@ func checkSBM(host, port, user, pass, dbname string, threshold int) []string {
 	if version[0:3] == "5.6" {
 		var sbmRow SBMRow
 		db.QueryRowx("show slave status").StructScan(&sbmRow)
+		if sbmRow.Slave_SQL_Running == "No" || sbmRow.Slave_IO_Running == "No" {
+			retList = append(retList, "Slave_IO_Running: "+sbmRow.Slave_IO_Running+"\n"+
+				"Slave_SQL_Running: "+sbmRow.Slave_SQL_Running+"\n"+
+				"Seconds_Behind_Master: "+sbmRow.Seconds_Behind_Master+"\n")
+			return retList
+		}
 		intSBM, err := strconv.Atoi(sbmRow.Seconds_Behind_Master)
 		if err != nil {
 			panic(err)
 		}
 		if intSBM > threshold {
-			retList = append(retList, "Slave_IO_Running: "+sbmRow.Slave_IO_Running+"\n"+
-				"Slave_SQL_Running: "+sbmRow.Slave_SQL_Running+"\n"+
-				"Seconds_Behind_Master: "+sbmRow.Seconds_Behind_Master+"\n")
-		}
-		if sbmRow.Slave_SQL_Running == "No" || sbmRow.Slave_IO_Running == "No" {
 			retList = append(retList, "Slave_IO_Running: "+sbmRow.Slave_IO_Running+"\n"+
 				"Slave_SQL_Running: "+sbmRow.Slave_SQL_Running+"\n"+
 				"Seconds_Behind_Master: "+sbmRow.Seconds_Behind_Master+"\n")
