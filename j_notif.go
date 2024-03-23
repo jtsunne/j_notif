@@ -29,7 +29,7 @@ func sendMsg(tgToken, chatId, text string) {
 		"chat_id": "` + chatId + `",
 		"text": "` + textToSend + `"
 	}`)
-	request, err := http.NewRequest("POST", httpposturl, bytes.NewBuffer(jsonData))
+	request, _ := http.NewRequest("POST", httpposturl, bytes.NewBuffer(jsonData))
 	request.Header.Set("Content-Type", "application/json; charset=UTF-8")
 
 	client := &http.Client{}
@@ -54,7 +54,7 @@ func diskUsage(mountPoints []string, threshold float64) []string {
 	parts, _ := disk.Partitions(true)
 	for _, p := range parts {
 		device := p.Mountpoint
-		if false == stringInList(device, mountPoints) {
+		if !stringInList(device, mountPoints) {
 			continue
 		}
 		s, _ := disk.Usage(device)
@@ -66,7 +66,6 @@ func diskUsage(mountPoints []string, threshold float64) []string {
 			percent := fmt.Sprintf("%2.f%%", s.UsedPercent)
 			txt := fmt.Sprintf("Mounted: %s\nUsed: %s\n", p.Mountpoint, percent)
 			retList = append(retList, txt)
-
 		}
 
 	}
@@ -211,10 +210,14 @@ type SBMRow struct {
 func checkSBM(host, port, user, pass, dbname string, threshold int) []string {
 	var retList []string
 	db, err := sqlx.Connect("mysql", user+":"+pass+"@tcp("+host+":"+port+")/"+dbname)
-	defer db.Close()
 	if err != nil {
 		panic(err)
 	}
+	defer func() {
+		if err := db.Close(); err != nil {
+			panic(err)
+		}
+	}()
 	var version string
 	db.QueryRow("SELECT VERSION()").Scan(&version)
 	fmt.Println("MySQL version: ", version)
@@ -264,10 +267,14 @@ func checkSBM(host, port, user, pass, dbname string, threshold int) []string {
 func checkPayEngine(host, port, user, pass, dbname string, threshold int) []string {
 	var retList []string
 	db, err := sqlx.Connect("mysql", user+":"+pass+"@tcp("+host+":"+port+")/"+dbname)
-	defer db.Close()
 	if err != nil {
 		panic(err)
 	}
+	defer func() {
+		if err := db.Close(); err != nil {
+			panic(err)
+		}
+	}()
 	sql := `
 select p.pay_engine,
        pe.name,
@@ -337,13 +344,13 @@ func main() {
 			log.Infoln("same disk notification. do not send")
 		} else {
 			if len(diskNotif) > 0 {
-				text := "check_pay_engine\n"
+				text := "disksToCheck\n"
 				for _, item := range diskNotif {
 					text = text + item + "\n"
 				}
 				sendMsg(tgToken, chatId, text)
 			} else {
-				sendMsg(tgToken, chatId, "check_pay_engine: OK")
+				sendMsg(tgToken, chatId, "disksToCheck: OK")
 			}
 		}
 		viper.Set("diskNotif", diskNotif)
